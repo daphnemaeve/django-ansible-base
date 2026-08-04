@@ -19,9 +19,11 @@ DEFAULT_SPECTACULAR_SETTINGS = {
     'COMPONENT_NO_READ_ONLY_REQUIRED': True,
     'PREPROCESSING_HOOKS': [
         'ansible_base.api_documentation.preprocessing_hooks.collect_ai_description_metadata',
+        'ansible_base.api_documentation.preprocessing_hooks.collect_clean_text_metadata',
     ],
     'POSTPROCESSING_HOOKS': [
         'ansible_base.api_documentation.postprocessing_hooks.add_x_ai_description',
+        'ansible_base.api_documentation.postprocessing_hooks.inject_clean_text_patterns',
     ],
 }
 DEFAULT_ANSIBLE_BASE_AUTH = "ansible_base.authentication.backend.AnsibleBaseAuth"
@@ -116,6 +118,8 @@ def get_mergeable_dab_settings(settings: dict) -> dict:  # NOSONAR
             'object_ansible_id',
             'assignment',  # for RoleAssignmentFilterBackend, assignment filtering
         )
+
+    rest_framework.setdefault('DEFAULT_METADATA_CLASS', 'ansible_base.lib.metadata.CleanTextMetadata')
 
     # SPECTACULAR SETTINGS
     if 'ansible_base.api_documentation' in installed_apps:
