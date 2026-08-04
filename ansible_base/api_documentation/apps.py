@@ -21,3 +21,27 @@ class ApiDocumentationConfig(AppConfig):
         if 'ansible_base.rest_filters' in settings.INSTALLED_APPS and 'ansible_base.api_documentation' in settings.INSTALLED_APPS:
             # If this service is using DAB rest filters and api documentation, load our filter extensions for OpenAPI
             from ansible_base.api_documentation import filter_extensions  # noqa: F401
+
+        self._ensure_spectacular_hooks(settings)
+
+    @staticmethod
+    def _ensure_spectacular_hooks(settings):
+        spectacular = getattr(settings, 'SPECTACULAR_SETTINGS', None)
+        if spectacular is None:
+            return
+
+        dab_hooks = {
+            'PREPROCESSING_HOOKS': [
+                'ansible_base.api_documentation.preprocessing_hooks.collect_ai_description_metadata',
+            ],
+            'POSTPROCESSING_HOOKS': [
+                'ansible_base.api_documentation.postprocessing_hooks.add_x_ai_description',
+                'ansible_base.api_documentation.postprocessing_hooks.inject_clean_text_patterns',
+            ],
+        }
+        for key, hooks in dab_hooks.items():
+            existing = spectacular.get(key, [])
+            for hook in hooks:
+                if hook not in existing:
+                    existing.append(hook)
+            spectacular[key] = existing

@@ -19,7 +19,6 @@ DEFAULT_SPECTACULAR_SETTINGS = {
     'COMPONENT_NO_READ_ONLY_REQUIRED': True,
     'PREPROCESSING_HOOKS': [
         'ansible_base.api_documentation.preprocessing_hooks.collect_ai_description_metadata',
-        'ansible_base.api_documentation.preprocessing_hooks.collect_clean_text_metadata',
     ],
     'POSTPROCESSING_HOOKS': [
         'ansible_base.api_documentation.postprocessing_hooks.add_x_ai_description',

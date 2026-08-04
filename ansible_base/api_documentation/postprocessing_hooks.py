@@ -453,3 +453,92 @@ def add_x_ai_description(result: dict, generator: Any, request: Any, public: Opt
                 _process_operation(operation, method, path)
 
     return result
+
+
+def _resolve_schema_base_name(schema_name: str) -> str:
+    """Strip drf-spectacular naming prefixes/suffixes to get the base serializer name."""
+    name = schema_name
+    if name.startswith('Patched'):
+        name = name[len('Patched'):]
+    for suffix in ('Request', 'Response'):
+        if name.endswith(suffix):
+            name = name[: -len(suffix)]
+    return name
+
+
+def _is_string_field(field_def: dict) -> bool:
+    """Check if an OpenAPI field definition represents a string type."""
+    if field_def.get('type') == 'string':
+        return True
+    for key in ('allOf', 'oneOf', 'anyOf'):
+        for sub in field_def.get(key, []):
+            if isinstance(sub, dict) and sub.get('type') == 'string':
+                return True
+    return False
+
+
+def _discover_clean_text_schemas(generator: Any) -> dict:
+    """
+    Build a map of schema component names to name_fields by inspecting
+    the generator's endpoints for serializers that use CleanTextMixin.
+
+    Falls back to CleanTextMixin._clean_text_schemas (populated via
+    __init_subclass__) and merges both sources.
+    """
+    from ansible_base.lib.validators import CleanTextMixin
+
+    registry = dict(CleanTextMixin._clean_text_schemas)
+
+    for endpoint in getattr(generator, 'endpoints', None) or []:
+        try:
+            path, path_regex, method, callback = endpoint
+        except (ValueError, TypeError):
+            continue
+        view_class = getattr(callback, 'cls', None)
+        if view_class is None:
+            continue
+        serializer_class = getattr(view_class, 'serializer_class', None)
+        if serializer_class is None:
+            continue
+        try:
+            if not issubclass(serializer_class, CleanTextMixin):
+                continue
+        except TypeError:
+            continue
+        schema_name = serializer_class.__name__
+        if schema_name.endswith('Serializer'):
+            schema_name = schema_name[: -len('Serializer')]
+        if schema_name not in registry:
+            registry[schema_name] = getattr(serializer_class, 'name_fields', frozenset())
+
+    return registry
+
+
+def inject_clean_text_patterns(result: dict, generator: Any, request: Any, public: Optional[bool]) -> dict:
+    """
+    Postprocessing hook for drf-spectacular that injects CleanTextMixin
+    Tier 1 ``pattern`` into OpenAPI schema field definitions.
+    """
+    from ansible_base.lib.validators import resource_name_validator
+
+    registry = _discover_clean_text_schemas(generator)
+    if not registry:
+        return result
+
+    pattern = resource_name_validator.regex.pattern
+    schemas = result.get('components', {}).get('schemas', {})
+
+    for schema_name, schema_def in schemas.items():
+        base_name = _resolve_schema_base_name(schema_name)
+
+        if base_name not in registry:
+            continue
+
+        name_fields = registry[base_name]
+        properties = schema_def.get('properties', {})
+
+        for field_name, field_def in properties.items():
+            if field_name in name_fields and _is_string_field(field_def):
+                field_def['pattern'] = pattern
+
+    return result
