@@ -29,7 +29,6 @@ class ApiDocumentationConfig(AppConfig):
             ],
             'POSTPROCESSING_HOOKS': [
                 'ansible_base.api_documentation.postprocessing_hooks.add_x_ai_description',
-                'ansible_base.api_documentation.postprocessing_hooks.inject_clean_text_patterns',
             ],
         }
         for key, hooks in dab_hooks.items():

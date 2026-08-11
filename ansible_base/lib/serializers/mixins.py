@@ -37,14 +37,6 @@ class CleanTextMixin:
 
     name_fields = DEFAULT_NAME_FIELDS
     excluded_fields = frozenset()
-    _clean_text_schemas = {}
-
-    def __init_subclass__(cls, **kwargs):
-        super().__init_subclass__(**kwargs)
-        schema_name = cls.__name__
-        if schema_name.endswith('Serializer'):
-            schema_name = schema_name[: -len('Serializer')]
-        cls._clean_text_schemas[schema_name] = getattr(cls, 'name_fields', DEFAULT_NAME_FIELDS)
 
     def validate(self, attrs):
         model = self.Meta.model

@@ -22,7 +22,6 @@ DEFAULT_SPECTACULAR_SETTINGS = {
     ],
     'POSTPROCESSING_HOOKS': [
         'ansible_base.api_documentation.postprocessing_hooks.add_x_ai_description',
-        'ansible_base.api_documentation.postprocessing_hooks.inject_clean_text_patterns',
     ],
 }
 DEFAULT_ANSIBLE_BASE_AUTH = "ansible_base.authentication.backend.AnsibleBaseAuth"
