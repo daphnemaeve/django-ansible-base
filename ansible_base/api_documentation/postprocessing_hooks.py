@@ -485,7 +485,7 @@ def _discover_clean_text_schemas(generator: Any) -> dict:
     Falls back to CleanTextMixin._clean_text_schemas (populated via
     __init_subclass__) and merges both sources.
     """
-    from ansible_base.lib.validators import CleanTextMixin
+    from ansible_base.lib.serializers.mixins import CleanTextMixin
 
     registry = dict(CleanTextMixin._clean_text_schemas)
 
@@ -519,13 +519,13 @@ def inject_clean_text_patterns(result: dict, generator: Any, request: Any, publi
     Postprocessing hook for drf-spectacular that injects CleanTextMixin
     Tier 1 ``pattern`` into OpenAPI schema field definitions.
     """
-    from ansible_base.lib.validators import resource_name_validator
+    from ansible_base.lib.utils.validation import RESOURCE_NAME_RE
 
     registry = _discover_clean_text_schemas(generator)
     if not registry:
         return result
 
-    pattern = resource_name_validator.regex.pattern
+    pattern = RESOURCE_NAME_RE.pattern.replace(r'\Z', '$')
     schemas = result.get('components', {}).get('schemas', {})
 
     for schema_name, schema_def in schemas.items():

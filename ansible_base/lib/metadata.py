@@ -11,7 +11,8 @@ def inject_clean_text_patterns(field, field_info):
     CleanTextMixin is not in the serializer's MRO or the field is not
     a text field subject to Tier 1 validation.
     """
-    from ansible_base.lib.validators import CleanTextMixin, resource_name_validator
+    from ansible_base.lib.serializers.mixins import CleanTextMixin
+    from ansible_base.lib.utils.validation import RESOURCE_NAME_RE
 
     serializer = field.parent
     if not isinstance(serializer, CleanTextMixin):
@@ -21,8 +22,8 @@ def inject_clean_text_patterns(field, field_info):
         return field_info
 
     if field.field_name in serializer.name_fields:
-        field_info['pattern'] = resource_name_validator.regex.pattern
-        field_info['pattern_description'] = str(resource_name_validator.message)
+        field_info['pattern'] = RESOURCE_NAME_RE.pattern.replace(r'\Z', '$')
+        field_info['pattern_description'] = 'May only contain letters, numbers, spaces, hyphens, underscores, dots, and @. Must start with a letter, number, or underscore. Maximum 512 characters.'
 
     return field_info
 
