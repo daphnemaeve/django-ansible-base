@@ -17,6 +17,43 @@ from rest_framework.serializers import ValidationError
 
 VALID_STRING = _('Must be a valid string')
 
+DEFAULT_NAME_FIELDS = frozenset({'name', 'username', 'hostname'})
+
+RESOURCE_NAME_RE = re.compile(r'^[\w][\w .@-]{0,511}\Z')
+
+CONTROL_CHARS = '[\x00-\x08\x0b\x0c\x0d-\x1f\x7f-\x9f​-‌‎-‏ -‮﻿￹-￻]'
+
+DANGEROUS_PATTERNS = re.compile(
+    CONTROL_CHARS + r'|[<＜]\s*/?(?:script|iframe|object|embed|form|base|meta|link|svg|math|template)\b'
+    r'|\bon[a-z]{3,}\s*='
+    r'|\b(?:javascript|vbscript|data)\s*:'
+    r'|[$]\([^)]+\)|[$]\{[^}]+\}'
+    r'|\{\{[^}]+\}\}|\{%[^%]+%\}',
+    re.IGNORECASE,
+)
+
+
+def validate_resource_name(value):
+    """Tier 1 validator: enforces strict allowlist for name-type fields."""
+    pattern_description= "Enter a valid resource name. Only letters, numbers, spaces, hyphens, underscores, dots, and @ are allowed."
+    "Must start with a letter, number, or underscore. Maximum 512 characters."
+    if not isinstance(value, str) or not RESOURCE_NAME_RE.match(value):
+        raise ValidationError(
+            _(
+                "Enter a valid resource name. Only letters, numbers, spaces, hyphens, underscores, dots, and @ are allowed."
+                " Must start with a letter, number, or underscore. Maximum 512 characters."
+            )
+        )
+
+
+def validate_free_text(value):
+    """Tier 2 validator: rejects dangerous patterns in general text fields."""
+    pattern_description= "This field can't include HTML tags, script markup, unsafe URI schemes, shell syntax, or control characters."
+    if not isinstance(value, str):
+        return
+    if DANGEROUS_PATTERNS.search(value):
+        raise ValidationError(_("This field can't include HTML tags, script markup, unsafe URI schemes, shell syntax, or control characters."))
+
 
 def validate_url_list(urls: list, schemes: list = ['https'], allow_plain_hostname: bool = False) -> None:
     if type(urls) is not list:
