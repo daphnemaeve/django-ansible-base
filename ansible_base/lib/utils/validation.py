@@ -20,6 +20,10 @@ VALID_STRING = _('Must be a valid string')
 DEFAULT_NAME_FIELDS = frozenset({'name', 'username', 'hostname'})
 
 RESOURCE_NAME_RE = re.compile(r'^[\w][\w .@-]{0,511}\Z')
+RESOURCE_NAME_DESCRIPTION = (
+    "Only letters, numbers, spaces, hyphens, underscores, dots, and @ are allowed."
+    " Must start with a letter, number, or underscore. Maximum 512 characters."
+)
 
 CONTROL_CHARS = '[\x00-\x08\x0b\x0c\x0d-\x1f\x7f-\x9f​-‌‎-‏ -‮﻿￹-￻]'
 
@@ -35,15 +39,8 @@ DANGEROUS_PATTERNS = re.compile(
 
 def validate_resource_name(value):
     """Tier 1 validator: enforces strict allowlist for name-type fields."""
-    pattern_description= "Enter a valid resource name. Only letters, numbers, spaces, hyphens, underscores, dots, and @ are allowed."
-    "Must start with a letter, number, or underscore. Maximum 512 characters."
     if not isinstance(value, str) or not RESOURCE_NAME_RE.match(value):
-        raise ValidationError(
-            _(
-                "Enter a valid resource name. Only letters, numbers, spaces, hyphens, underscores, dots, and @ are allowed."
-                " Must start with a letter, number, or underscore. Maximum 512 characters."
-            )
-        )
+        raise ValidationError(_(RESOURCE_NAME_DESCRIPTION))
 
 
 def validate_free_text(value):

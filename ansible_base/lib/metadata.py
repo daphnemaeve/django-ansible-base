@@ -12,7 +12,7 @@ def inject_clean_text_patterns(field, field_info):
     a text field subject to Tier 1 validation.
     """
     from ansible_base.lib.serializers.mixins import CleanTextMixin
-    from ansible_base.lib.utils.validation import RESOURCE_NAME_RE
+    from ansible_base.lib.utils.validation import RESOURCE_NAME_DESCRIPTION, RESOURCE_NAME_RE
 
     serializer = field.parent
     if not isinstance(serializer, CleanTextMixin):
@@ -23,7 +23,7 @@ def inject_clean_text_patterns(field, field_info):
 
     if field.field_name in serializer.name_fields:
         field_info['pattern'] = RESOURCE_NAME_RE.pattern.replace(r'\Z', '$')
-        field_info['pattern_description'] = 'May only contain letters, numbers, spaces, hyphens, underscores, dots, and @. Must start with a letter, number, or underscore. Maximum 512 characters.'
+        field_info['pattern_description'] = RESOURCE_NAME_DESCRIPTION
 
     return field_info
 
